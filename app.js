@@ -9,11 +9,10 @@ const WEEKDAY_NAMES = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Th
 
 // Status options mapping for labels
 const STATUS_LABELS = {
+    'work': 'Đi làm',
     'study': 'Đi trường',
-    'exam': 'Thi cử',
     'holiday': 'Nghỉ lễ',
-    'event': 'Sự kiện',
-    'off': 'Nghỉ học',
+    'off': 'Nghỉ làm',
     '': 'Chưa xếp'
 };
 
@@ -32,37 +31,32 @@ function seedMockWeeklySchedule(month, year) {
         const keyChieu = `${dateStr}_chieu`;
         
         if (dayOfWeek === 0) {
-            // Sunday: off
+            // Sunday: off work
             mockSchedule[keySang] = { status: 'off', notes: 'Nghỉ cuối tuần' };
             mockSchedule[keyChieu] = { status: 'off', notes: 'Nghỉ cuối tuần' };
         } else if (dayOfWeek === 6) {
-            // Saturday
+            // Saturday: off work or school session
             if (day === 6 || day === 20) {
-                mockSchedule[keySang] = { status: 'event', notes: 'Sinh hoạt CLB Tin học' };
-                mockSchedule[keyChieu] = { status: '', notes: 'Học nhóm' };
+                mockSchedule[keySang] = { status: 'study', notes: 'Học buổi sáng chuyên đề AI' };
+                mockSchedule[keyChieu] = { status: 'off', notes: 'Nghỉ cuối tuần' };
             } else {
-                mockSchedule[keySang] = { status: '', notes: 'Tự học ca sáng' };
+                mockSchedule[keySang] = { status: 'off', notes: 'Nghỉ cuối tuần' };
                 mockSchedule[keyChieu] = { status: 'off', notes: 'Nghỉ cuối tuần' };
             }
         } else {
             // Weekdays (Monday - Friday)
             if (dayOfWeek === 1 || dayOfWeek === 3) {
-                // Mon, Wed
-                mockSchedule[keySang] = { status: 'study', notes: 'Lý thuyết Mạng Máy Tính' };
-                mockSchedule[keyChieu] = { status: 'study', notes: 'Thực hành Hệ Điều Hành' };
+                // Mon, Wed: Work morning, School afternoon
+                mockSchedule[keySang] = { status: 'work', notes: 'Làm việc tại công ty (Dự án A)' };
+                mockSchedule[keyChieu] = { status: 'study', notes: 'Học Lý thuyết đồ thị (Phòng 301)' };
             } else if (dayOfWeek === 2 || dayOfWeek === 4) {
-                // Tue, Thu
-                mockSchedule[keySang] = { status: 'study', notes: 'Tiếng Anh Chuyên Ngành' };
-                mockSchedule[keyChieu] = { status: '', notes: 'Nghiên cứu khoa học' };
+                // Tue, Thu: Work full day
+                mockSchedule[keySang] = { status: 'work', notes: 'Làm việc tại văn phòng' };
+                mockSchedule[keyChieu] = { status: 'work', notes: 'Họp tiến độ dự án' };
             } else if (dayOfWeek === 5) {
-                // Friday
-                if (day === 12 || day === 26) {
-                    mockSchedule[keySang] = { status: 'exam', notes: 'Thi cuối kỳ môn Giải Tích' };
-                    mockSchedule[keyChieu] = { status: 'off', notes: 'Nghỉ sau khi thi' };
-                } else {
-                    mockSchedule[keySang] = { status: 'study', notes: 'Chuyên đề Trí Tuệ Nhân Tạo' };
-                    mockSchedule[keyChieu] = { status: 'study', notes: 'Thực hành Lập Trình AI' };
-                }
+                // Friday: School morning, Work afternoon
+                mockSchedule[keySang] = { status: 'study', notes: 'Học Thực hành Cấu trúc dữ liệu' };
+                mockSchedule[keyChieu] = { status: 'work', notes: 'Làm việc tại công ty' };
             }
         }
     }
@@ -159,8 +153,8 @@ function populateFilters() {
 // Calculate and Update Stats
 function updateStats() {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    let workSessions = 0;
     let schoolSessions = 0;
-    let examSessions = 0;
     let holidaySessions = 0;
     let offSessions = 0;
 
@@ -173,20 +167,20 @@ function updateStats() {
         const dataChieu = scheduleData[keyChieu] || { status: '', notes: '' };
         
         // Count Sáng
-        if (dataSang.status === 'study') schoolSessions++;
-        else if (dataSang.status === 'exam') examSessions++;
+        if (dataSang.status === 'work') workSessions++;
+        else if (dataSang.status === 'study') schoolSessions++;
         else if (dataSang.status === 'holiday') holidaySessions++;
         else if (dataSang.status === 'off') offSessions++;
 
         // Count Chiều
-        if (dataChieu.status === 'study') schoolSessions++;
-        else if (dataChieu.status === 'exam') examSessions++;
+        if (dataChieu.status === 'work') workSessions++;
+        else if (dataChieu.status === 'study') schoolSessions++;
         else if (dataChieu.status === 'holiday') holidaySessions++;
         else if (dataChieu.status === 'off') offSessions++;
     }
 
+    document.getElementById('stat-work-days').textContent = workSessions;
     document.getElementById('stat-school-days').textContent = schoolSessions;
-    document.getElementById('stat-exams').textContent = examSessions;
     document.getElementById('stat-holidays').textContent = holidaySessions;
     document.getElementById('stat-off-days').textContent = offSessions;
 }
@@ -349,6 +343,7 @@ function renderWeeklyTables() {
 }
 
 // Create an individual schedule cell td element
+// Status list for worker: Trống, Đi làm, Đi trường, Nghỉ lễ, Nghỉ làm
 function createScheduleCell(dateStr, session, dayOfWeek, isOtherMonth, isToday) {
     const td = document.createElement('td');
     const key = `${dateStr}_${session}`;
@@ -377,11 +372,10 @@ function createScheduleCell(dateStr, session, dayOfWeek, isOtherMonth, isToday) 
         
         const options = [
             { value: '', label: 'Trống' },
-            { value: 'study', label: 'Đi học' },
-            { value: 'exam', label: 'Thi cử' },
+            { value: 'work', label: 'Đi làm' },
+            { value: 'study', label: 'Đi trường' },
             { value: 'holiday', label: 'Nghỉ lễ' },
-            { value: 'event', label: 'Sự kiện' },
-            { value: 'off', label: 'Nghỉ học' }
+            { value: 'off', label: 'Nghỉ làm' }
         ];
 
         options.forEach(opt => {

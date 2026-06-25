@@ -12,24 +12,20 @@
     --primary-light: rgba(79, 70, 229, 0.08);
     
     /* Status Colors & Backgrounds (Excel Cell Fills) */
+    --work-color: #0284c7; /* Sky 600 */
+    --work-bg: rgba(14, 165, 233, 0.08);
+    --work-border: rgba(14, 165, 233, 0.25);
+
     --study-color: #059669; /* Emerald 600 */
-    --study-bg: rgba(16, 185, 129, 0.1);
+    --study-bg: rgba(16, 185, 129, 0.08);
     --study-border: rgba(16, 185, 129, 0.25);
     
-    --exam-color: #d97706; /* Amber 600 */
-    --exam-bg: rgba(245, 158, 11, 0.1);
-    --exam-border: rgba(245, 158, 11, 0.25);
-    
     --holiday-color: #7c3aed; /* Purple 600 */
-    --holiday-bg: rgba(168, 85, 247, 0.1);
+    --holiday-bg: rgba(168, 85, 247, 0.08);
     --holiday-border: rgba(168, 85, 247, 0.25);
     
-    --event-color: #0284c7; /* Sky 600 */
-    --event-bg: rgba(14, 165, 233, 0.1);
-    --event-border: rgba(14, 165, 233, 0.25);
-    
     --off-color: #dc2626; /* Red 600 */
-    --off-bg: rgba(239, 68, 68, 0.1);
+    --off-bg: rgba(239, 68, 68, 0.08);
     --off-border: rgba(239, 68, 68, 0.25);
     
     --empty-color: #94a3b8; /* Slate 400 */
@@ -255,8 +251,8 @@ body {
     height: 100%;
 }
 
+.card-work::before { background-color: var(--work-color); }
 .card-school::before { background-color: var(--study-color); }
-.card-exam::before { background-color: var(--exam-color); }
 .card-holiday::before { background-color: var(--holiday-color); }
 .card-off::before { background-color: var(--off-color); }
 
@@ -270,8 +266,8 @@ body {
     font-size: 18px;
 }
 
+.card-work .stat-icon { background-color: rgba(14, 165, 233, 0.1); color: var(--work-color); }
 .card-school .stat-icon { background-color: rgba(16, 185, 129, 0.1); color: var(--study-color); }
-.card-exam .stat-icon { background-color: rgba(245, 158, 11, 0.1); color: var(--exam-color); }
 .card-holiday .stat-icon { background-color: rgba(168, 85, 247, 0.1); color: var(--holiday-color); }
 .card-off .stat-icon { background-color: rgba(239, 68, 68, 0.1); color: var(--off-color); }
 
@@ -345,10 +341,9 @@ body {
     font-size: 11px;
 }
 
+.badge-work { background-color: rgba(14, 165, 233, 0.15); color: var(--work-color); border: 1px solid var(--work-border); }
 .badge-study { background-color: rgba(16, 185, 129, 0.15); color: var(--study-color); border: 1px solid var(--study-border); }
-.badge-exam { background-color: rgba(245, 158, 11, 0.15); color: var(--exam-color); border: 1px solid var(--exam-border); }
 .badge-holiday { background-color: rgba(168, 85, 247, 0.15); color: var(--holiday-color); border: 1px solid var(--holiday-border); }
-.badge-event { background-color: rgba(14, 165, 233, 0.15); color: var(--event-color); border: 1px solid var(--event-border); }
 .badge-off { background-color: rgba(239, 68, 68, 0.15); color: var(--off-color); border: 1px solid var(--off-border); }
 .badge-empty { background-color: #f1f5f9; color: #94a3b8; border: 1px dashed #cbd5e1; }
 
@@ -477,29 +472,23 @@ body {
 }
 
 /* Interactive Color Coding on Cell Backgrounds */
+.cell-work {
+    background-color: var(--work-bg) !important;
+    border-color: var(--work-border) !important;
+}
+.cell-work .cell-status-select { color: var(--work-color); }
+
 .cell-study {
     background-color: var(--study-bg) !important;
     border-color: var(--study-border) !important;
 }
 .cell-study .cell-status-select { color: var(--study-color); }
 
-.cell-exam {
-    background-color: var(--exam-bg) !important;
-    border-color: var(--exam-border) !important;
-}
-.cell-exam .cell-status-select { color: var(--exam-color); }
-
 .cell-holiday {
     background-color: var(--holiday-bg) !important;
     border-color: var(--holiday-border) !important;
 }
 .cell-holiday .cell-status-select { color: var(--holiday-color); }
-
-.cell-event {
-    background-color: var(--event-bg) !important;
-    border-color: var(--event-border) !important;
-}
-.cell-event .cell-status-select { color: var(--event-color); }
 
 .cell-off {
     background-color: var(--off-bg) !important;
@@ -509,12 +498,12 @@ body {
 
 /* Weekend Header Styling */
 .weekend-sat-header {
-    color: #0284c7 !important; /* Sky 600 */
+    color: #0284c7 !important;
     background-color: rgba(14, 165, 233, 0.08) !important;
 }
 
 .weekend-sun-header {
-    color: #dc2626 !important; /* Red 600 */
+    color: #dc2626 !important;
     background-color: rgba(239, 68, 68, 0.08) !important;
 }
 
@@ -537,152 +526,6 @@ body {
 }
 .cell-other-month .cell-textarea {
     pointer-events: none;
-}
-
-/* Employee Manager Panel Styling */
-.employee-manager-panel {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 20px 24px;
-    box-shadow: var(--shadow-md);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.employee-manager-panel.hidden {
-    display: none !important;
-}
-.panel-header {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.panel-header h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.panel-subtitle {
-    font-size: 12.5px;
-    color: var(--text-muted);
-}
-.add-employee-form {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    max-width: 450px;
-    width: 100%;
-}
-.add-employee-form input {
-    flex-grow: 1;
-}
-.employees-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 12px;
-    max-height: 250px;
-    overflow-y: auto;
-    padding-right: 4px;
-    margin-top: 8px;
-}
-.employee-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    background-color: var(--bg-app);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    transition: all 0.2s ease;
-}
-.employee-item:hover {
-    border-color: var(--primary);
-    background-color: var(--primary-light);
-}
-.employee-name {
-    font-weight: 600;
-    font-size: 13.5px;
-    color: var(--text-main);
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    flex-grow: 1;
-    margin-right: 8px;
-}
-.employee-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-.employee-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    font-size: 12px;
-    transition: all 0.15s ease;
-}
-.btn-edit-name {
-    color: var(--text-muted);
-}
-.btn-edit-name:hover {
-    color: var(--primary);
-    background-color: rgba(79, 70, 229, 0.1);
-}
-.btn-delete-emp {
-    color: var(--off-color);
-}
-.btn-delete-emp:hover {
-    color: #b91c1c;
-    background-color: rgba(220, 38, 38, 0.1);
-}
-
-/* Stats Section Headers */
-.stats-header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 8px;
-}
-.stats-section-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.stats-filter-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.stats-filter-group label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-}
-
-/* Row separation for multiple employees in week table */
-.employee-border-top td {
-    border-top: 2px solid #94a3b8 !important;
-}
-
-/* Empty placeholder row in table */
-.empty-table-row {
-    text-align: center;
-    color: var(--text-muted);
-    font-style: italic;
-    padding: 20px !important;
-    background-color: var(--bg-app);
 }
 
 /* Footer Styling */
@@ -709,8 +552,6 @@ body {
     }
     
     .app-header, 
-    .employee-manager-panel,
-    .stats-header-container,
     .stats-overview, 
     .legend-container,
     .app-footer {
@@ -780,11 +621,10 @@ body {
         margin-bottom: 2px;
     }
 
-    .cell-study::before { content: "ĐI HỌC"; color: #047857; }
-    .cell-exam::before { content: "THI CỬ"; color: #b45309; }
+    .cell-work::before { content: "ĐI LÀM"; color: #0369a1; }
+    .cell-study::before { content: "ĐI TRƯỜNG"; color: #047857; }
     .cell-holiday::before { content: "NGHỈ LỄ"; color: #6b21a8; }
-    .cell-event::before { content: "SỰ KIỆN"; color: #0369a1; }
-    .cell-off::before { content: "NGHỈ HỌC"; color: #b91c1c; }
+    .cell-off::before { content: "NGHỈ LÀM"; color: #b91c1c; }
 
     .cell-textarea {
         color: black !important;
