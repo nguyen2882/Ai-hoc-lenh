@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>chuanhoaAI - Bảng Chấm Công Tự Động</title>
+    <title>chuanhoaAI - Lịch Đi Trường Cá Nhân</title>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,13 +14,13 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar or Header -->
+        <!-- Header Section -->
         <header class="app-header">
             <div class="header-logo">
-                <i class="fa-solid fa-calendar-check logo-icon"></i>
+                <i class="fa-solid fa-graduation-cap logo-icon"></i>
                 <div class="logo-text">
                     <h1>chuanhoaAI</h1>
-                    <span>Bảng Chấm Công Thông Minh</span>
+                    <span>Lịch Ghi Chú Đi Trường Cá Nhân</span>
                 </div>
             </div>
             
@@ -40,126 +40,86 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button id="btn-add-employee" class="btn btn-primary">
-                        <i class="fa-solid fa-user-plus"></i> Thêm Nhân Viên
-                    </button>
                     <button id="btn-export-csv" class="btn btn-success">
-                        <i class="fa-solid fa-file-excel"></i> Xuất Excel (CSV)
+                        <i class="fa-solid fa-file-csv"></i> Xuất File Excel (CSV)
                     </button>
                     <button id="btn-print" class="btn btn-secondary">
-                        <i class="fa-solid fa-print"></i> In Bảng Công
+                        <i class="fa-solid fa-print"></i> In Lịch Tháng (A4)
                     </button>
-                    <button id="btn-clear-all" class="btn btn-danger">
-                        <i class="fa-solid fa-trash-can"></i> Xóa Hết
+                    <button id="btn-clear-month" class="btn btn-danger">
+                        <i class="fa-solid fa-eraser"></i> Xóa Lịch Tháng Này
                     </button>
                 </div>
             </div>
         </header>
 
-        <!-- Stats Overview Cards -->
+        <!-- Stats Section -->
         <section class="stats-overview">
-            <div class="stat-card card-total">
-                <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="stat-card card-school">
+                <div class="stat-icon"><i class="fa-solid fa-school"></i></div>
                 <div class="stat-info">
-                    <span class="stat-label">Tổng Nhân Viên</span>
-                    <span id="stat-total-employees" class="stat-value">0</span>
+                    <span class="stat-label">Số Buổi Đi Trường</span>
+                    <span id="stat-school-days" class="stat-value">0</span>
                 </div>
             </div>
-            <div class="stat-card card-present">
-                <div class="stat-icon"><i class="fa-solid fa-user-check"></i></div>
+            <div class="stat-card card-exam">
+                <div class="stat-icon"><i class="fa-solid fa-pen-clip"></i></div>
                 <div class="stat-info">
-                    <span class="stat-label">Tổng Công Thực Tế</span>
-                    <span id="stat-total-workdays" class="stat-value">0</span>
+                    <span class="stat-label">Buổi Thi Cử</span>
+                    <span id="stat-exams" class="stat-value">0</span>
                 </div>
             </div>
-            <div class="stat-card card-leave">
-                <div class="stat-icon"><i class="fa-solid fa-business-time"></i></div>
+            <div class="stat-card card-holiday">
+                <div class="stat-icon"><i class="fa-solid fa-umbrella-beach"></i></div>
                 <div class="stat-info">
-                    <span class="stat-label">Tổng Ngày Phép (P)</span>
-                    <span id="stat-total-leave" class="stat-value">0</span>
+                    <span class="stat-label">Nghỉ Lễ / Tết</span>
+                    <span id="stat-holidays" class="stat-value">0</span>
                 </div>
             </div>
-            <div class="stat-card card-absent">
-                <div class="stat-icon"><i class="fa-solid fa-user-slash"></i></div>
+            <div class="stat-card card-off">
+                <div class="stat-icon"><i class="fa-solid fa-house-user"></i></div>
                 <div class="stat-info">
-                    <span class="stat-label">Không Phép (KP)</span>
-                    <span id="stat-total-absent" class="stat-value">0</span>
+                    <span class="stat-label">Số Ngày Nghỉ Học</span>
+                    <span id="stat-off-days" class="stat-value">0</span>
                 </div>
             </div>
         </section>
 
-        <!-- Table Container -->
-        <main class="table-container-wrapper">
-            <div class="table-card">
-                <div class="table-header-info">
-                    <h2 id="table-title">BẢNG CHẤM CÔNG - THÁNG 06/2026</h2>
+        <!-- Calendar Section -->
+        <main class="calendar-wrapper">
+            <div class="calendar-card">
+                <div class="calendar-header-info">
+                    <h2 id="calendar-title">LỊCH TRÌNH ĐI TRƯỜNG - THÁNG 06/2026</h2>
                     <div class="legend-container">
-                        <span class="legend-item"><span class="badge badge-x">X</span> Công cả ngày</span>
-                        <span class="legend-item"><span class="badge badge-half">½</span> Nửa ngày</span>
-                        <span class="legend-item"><span class="badge badge-p">P</span> Nghỉ phép</span>
-                        <span class="legend-item"><span class="badge badge-l">L</span> Nghỉ lễ</span>
-                        <span class="legend-item"><span class="badge badge-kp">KP</span> Không phép</span>
-                        <span class="legend-item"><span class="badge badge-off">OFF</span> Nghỉ tuần</span>
-                        <span class="legend-item"><span class="badge badge-empty">-</span> Chưa chấm</span>
+                        <span class="legend-item"><span class="badge badge-study"><i class="fa-solid fa-book-open"></i></span> Đi trường</span>
+                        <span class="legend-item"><span class="badge badge-exam"><i class="fa-solid fa-pen-clip"></i></span> Thi cử</span>
+                        <span class="legend-item"><span class="badge badge-holiday"><i class="fa-solid fa-umbrella-beach"></i></span> Nghỉ lễ</span>
+                        <span class="legend-item"><span class="badge badge-event"><i class="fa-solid fa-star"></i></span> Sự kiện</span>
+                        <span class="legend-item"><span class="badge badge-off"><i class="fa-solid fa-circle-xmark"></i></span> Nghỉ học</span>
+                        <span class="legend-item"><span class="badge badge-empty"><i class="fa-solid fa-minus"></i></span> Chưa xếp</span>
                     </div>
                 </div>
                 
-                <div class="table-responsive">
-                    <table id="attendance-table" class="attendance-table">
-                        <thead>
-                            <!-- Will be generated by JS -->
-                        </thead>
-                        <tbody>
-                            <!-- Will be generated by JS -->
-                        </tbody>
-                    </table>
+                <!-- Calendar Grid Layout -->
+                <div class="calendar-grid-container">
+                    <!-- Weekday Headers -->
+                    <div class="calendar-week-headers">
+                        <div class="week-header">Thứ Hai</div>
+                        <div class="week-header">Thứ Ba</div>
+                        <div class="week-header">Thứ Tư</div>
+                        <div class="week-header">Thứ Năm</div>
+                        <div class="week-header">Thứ Sáu</div>
+                        <div class="week-header weekend-sat-header">Thứ Bảy</div>
+                        <div class="week-header weekend-sun-header">Chủ Nhật</div>
+                    </div>
+                    
+                    <!-- Days Grid -->
+                    <div id="calendar-days-grid" class="calendar-days-grid">
+                        <!-- Will be generated by JS -->
+                    </div>
                 </div>
             </div>
         </main>
-
-        <!-- Employee Modal -->
-        <div id="employee-modal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 id="modal-title">Thêm Nhân Viên Mới</h3>
-                    <span class="close-btn" id="close-modal">&times;</span>
-                </div>
-                <form id="employee-form">
-                    <input type="hidden" id="edit-employee-idx" value="">
-                    
-                    <div class="form-group">
-                        <label for="emp-id">Mã Nhân Viên <span class="required">*</span></label>
-                        <input type="text" id="emp-id" placeholder="VD: NV001" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="emp-name">Họ và Tên <span class="required">*</span></label>
-                        <input type="text" id="emp-name" placeholder="VD: Nguyễn Văn A" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="emp-position">Chức Vụ</label>
-                        <input type="text" id="emp-position" placeholder="VD: Nhân viên Văn phòng">
-                    </div>
-                    
-                    <div class="modal-actions">
-                        <button type="button" id="btn-cancel" class="btn btn-secondary">Hủy</button>
-                        <button type="submit" id="btn-save" class="btn btn-primary">Lưu Lại</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Cell Dropdown Menu Popover -->
-        <div id="cell-popover" class="cell-popover">
-            <div class="popover-option" data-value="X"><span class="badge badge-x">X</span> Cả ngày</div>
-            <div class="popover-option" data-value="½"><span class="badge badge-half">½</span> Nửa ngày</div>
-            <div class="popover-option" data-value="P"><span class="badge badge-p">P</span> Nghỉ phép</div>
-            <div class="popover-option" data-value="L"><span class="badge badge-l">L</span> Nghỉ lễ</div>
-            <div class="popover-option" data-value="KP"><span class="badge badge-kp">KP</span> Không phép</div>
-            <div class="popover-option" data-value="OFF"><span class="badge badge-off">OFF</span> Nghỉ tuần</div>
-            <div class="popover-option" data-value=""><span class="badge badge-empty">-</span> Chưa chấm</div>
-        </div>
 
         <!-- Footer -->
         <footer class="app-footer">
