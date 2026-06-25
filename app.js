@@ -1,5 +1,6 @@
 // State Management
-let scheduleData = {}; // Format: { 'YYYY-MM-DD': { status: 'study'|'exam'|'holiday'|'event'|'off'|'', notes: '...' } }
+let scheduleData = {}; // Format: { 'YYYY-MM-DD_sang': { status, notes }, 'YYYY-MM-DD_chieu': { status, notes } }
+let userName = "Trần Quang Nguyên";
 let currentMonth = 5; // June (0-indexed, so 5 is June)
 let currentYear = 2026;
 
@@ -17,52 +18,50 @@ const STATUS_LABELS = {
 };
 
 // Seed Mock Data if first time opening
-function seedMockSchedule(month, year) {
+function seedMockWeeklySchedule(month, year) {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const mockSchedule = {};
     
-    // Let's seed some realistic schedule notes for a student
+    // Seed some mock schedules for morning and afternoon
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         const dayOfWeek = date.getDay(); // 0 is Sunday, 6 is Saturday
         const dateStr = formatDateString(year, month, day);
         
+        const keySang = `${dateStr}_sang`;
+        const keyChieu = `${dateStr}_chieu`;
+        
         if (dayOfWeek === 0) {
             // Sunday: off
-            mockSchedule[dateStr] = { status: 'off', notes: 'Nghỉ ngơi cuối tuần' };
+            mockSchedule[keySang] = { status: 'off', notes: 'Nghỉ cuối tuần' };
+            mockSchedule[keyChieu] = { status: 'off', notes: 'Nghỉ cuối tuần' };
         } else if (dayOfWeek === 6) {
-            // Saturday: club or event
+            // Saturday
             if (day === 6 || day === 20) {
-                mockSchedule[dateStr] = { status: 'event', notes: 'Sinh hoạt CLB Tin học & AI' };
+                mockSchedule[keySang] = { status: 'event', notes: 'Sinh hoạt CLB Tin học' };
+                mockSchedule[keyChieu] = { status: '', notes: 'Học nhóm' };
             } else {
-                mockSchedule[dateStr] = { status: '', notes: 'Tự học tại nhà' };
+                mockSchedule[keySang] = { status: '', notes: 'Tự học ca sáng' };
+                mockSchedule[keyChieu] = { status: 'off', notes: 'Nghỉ cuối tuần' };
             }
         } else {
-            // Weekdays
+            // Weekdays (Monday - Friday)
             if (dayOfWeek === 1 || dayOfWeek === 3) {
-                // Mon, Wed: Go to school
-                mockSchedule[dateStr] = { 
-                    status: 'study', 
-                    notes: 'Sáng: Học Lý thuyết đồ thị (Phòng 301)\nChiều: Thực hành Cấu trúc dữ liệu' 
-                };
+                // Mon, Wed
+                mockSchedule[keySang] = { status: 'study', notes: 'Lý thuyết Mạng Máy Tính' };
+                mockSchedule[keyChieu] = { status: 'study', notes: 'Thực hành Hệ Điều Hành' };
             } else if (dayOfWeek === 2 || dayOfWeek === 4) {
-                // Tue, Thu: Go to school
-                mockSchedule[dateStr] = { 
-                    status: 'study', 
-                    notes: 'Sáng: Học Tiếng Anh chuyên ngành\nChiều: Tự học ở thư viện' 
-                };
+                // Tue, Thu
+                mockSchedule[keySang] = { status: 'study', notes: 'Tiếng Anh Chuyên Ngành' };
+                mockSchedule[keyChieu] = { status: '', notes: 'Nghiên cứu khoa học' };
             } else if (dayOfWeek === 5) {
-                // Friday: Exam or study
+                // Friday
                 if (day === 12 || day === 26) {
-                    mockSchedule[dateStr] = { 
-                        status: 'exam', 
-                        notes: 'Thi giữa kỳ môn Giải tích (Ca sáng - 8h00)' 
-                    };
+                    mockSchedule[keySang] = { status: 'exam', notes: 'Thi cuối kỳ môn Giải Tích' };
+                    mockSchedule[keyChieu] = { status: 'off', notes: 'Nghỉ sau khi thi' };
                 } else {
-                    mockSchedule[dateStr] = { 
-                        status: 'study', 
-                        notes: 'Sáng: Seminar chuyên đề Trí tuệ nhân tạo' 
-                    };
+                    mockSchedule[keySang] = { status: 'study', notes: 'Chuyên đề Trí Tuệ Nhân Tạo' };
+                    mockSchedule[keyChieu] = { status: 'study', notes: 'Thực hành Lập Trình AI' };
                 }
             }
         }
@@ -70,7 +69,8 @@ function seedMockSchedule(month, year) {
     
     // Add a holiday example
     const holidayDateStr = formatDateString(year, month, 15);
-    mockSchedule[holidayDateStr] = { status: 'holiday', notes: 'Nghỉ lễ Giữa kỳ (Toàn trường nghỉ)' };
+    mockSchedule[`${holidayDateStr}_sang`] = { status: 'holiday', notes: 'Nghỉ lễ Giữa kỳ' };
+    mockSchedule[`${holidayDateStr}_chieu`] = { status: 'holiday', notes: 'Nghỉ lễ Giữa kỳ' };
     
     return mockSchedule;
 }
@@ -80,6 +80,13 @@ function formatDateString(year, month, day) {
     const mm = String(month + 1).padStart(2, '0');
     const dd = String(day).padStart(2, '0');
     return `${year}-${mm}-${dd}`;
+}
+
+// Format date to DD/MM
+function formatDateDDMM(date) {
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}`;
 }
 
 // Debounce helper to avoid saving on every single keystroke
@@ -93,31 +100,34 @@ function debounce(func, delay) {
 
 // Save & Load
 function loadData() {
-    const storedSchedule = localStorage.getItem('chuanhoaai_schedule');
+    const storedSchedule = localStorage.getItem('chuanhoaai_weekly_schedule');
     const storedMonth = localStorage.getItem('chuanhoaai_month');
     const storedYear = localStorage.getItem('chuanhoaai_year');
+    const storedName = localStorage.getItem('chuanhoaai_username');
 
     // Default to current date (June 2026 based on metadata)
     const now = new Date("2026-06-25T10:09:02+07:00");
     currentMonth = storedMonth ? parseInt(storedMonth) : now.getMonth();
     currentYear = storedYear ? parseInt(storedYear) : now.getFullYear();
+    userName = storedName ? storedName : "Trần Quang Nguyên";
 
     if (storedSchedule) {
         scheduleData = JSON.parse(storedSchedule);
     } else {
         // First time opening: seed mock data
-        scheduleData = seedMockSchedule(currentMonth, currentYear);
+        scheduleData = seedMockWeeklySchedule(currentMonth, currentYear);
         saveData();
     }
 }
 
 function saveData() {
-    localStorage.setItem('chuanhoaai_schedule', JSON.stringify(scheduleData));
+    localStorage.setItem('chuanhoaai_weekly_schedule', JSON.stringify(scheduleData));
     localStorage.setItem('chuanhoaai_month', currentMonth);
     localStorage.setItem('chuanhoaai_year', currentYear);
+    localStorage.setItem('chuanhoaai_username', userName);
 }
 
-// Populate Filters
+// Populate Filter Dropdowns
 function populateFilters() {
     const monthSelect = document.getElementById('month-select');
     const yearSelect = document.getElementById('year-select');
@@ -149,148 +159,225 @@ function populateFilters() {
 // Calculate and Update Stats
 function updateStats() {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    let schoolDaysCount = 0;
-    let examsCount = 0;
-    let holidaysCount = 0;
-    let offDaysCount = 0;
+    let schoolSessions = 0;
+    let examSessions = 0;
+    let holidaySessions = 0;
+    let offSessions = 0;
 
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = formatDateString(currentYear, currentMonth, day);
-        const dayData = scheduleData[dateStr] || { status: '', notes: '' };
+        const keySang = `${dateStr}_sang`;
+        const keyChieu = `${dateStr}_chieu`;
         
-        switch (dayData.status) {
-            case 'study':
-                schoolDaysCount++;
-                break;
-            case 'exam':
-                examsCount++;
-                break;
-            case 'holiday':
-                holidaysCount++;
-                break;
-            case 'off':
-                offDaysCount++;
-                break;
-        }
+        const dataSang = scheduleData[keySang] || { status: '', notes: '' };
+        const dataChieu = scheduleData[keyChieu] || { status: '', notes: '' };
+        
+        // Count Sáng
+        if (dataSang.status === 'study') schoolSessions++;
+        else if (dataSang.status === 'exam') examSessions++;
+        else if (dataSang.status === 'holiday') holidaySessions++;
+        else if (dataSang.status === 'off') offSessions++;
+
+        // Count Chiều
+        if (dataChieu.status === 'study') schoolSessions++;
+        else if (dataChieu.status === 'exam') examSessions++;
+        else if (dataChieu.status === 'holiday') holidaySessions++;
+        else if (dataChieu.status === 'off') offSessions++;
     }
 
-    document.getElementById('stat-school-days').textContent = schoolDaysCount;
-    document.getElementById('stat-exams').textContent = examsCount;
-    document.getElementById('stat-holidays').textContent = holidaysCount;
-    document.getElementById('stat-off-days').textContent = offDaysCount;
+    document.getElementById('stat-school-days').textContent = schoolSessions;
+    document.getElementById('stat-exams').textContent = examSessions;
+    document.getElementById('stat-holidays').textContent = holidaySessions;
+    document.getElementById('stat-off-days').textContent = offSessions;
 }
 
-// Render Calendar Grid
-function renderCalendarGrid() {
-    const gridContainer = document.getElementById('calendar-days-grid');
-    gridContainer.innerHTML = '';
-
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+// Calculate Weeks partition of the month
+// Return array of objects: { start: Date, end: Date, days: [Date, Date...] }
+function getWeeksOfMonth() {
+    const weeks = [];
+    const firstOfMonth = new Date(currentYear, currentMonth, 1);
     
-    // Get column index of the 1st day of this month
-    // JavaScript getDay() returns 0 for Sunday, 1 for Monday, etc.
-    // Our grid is Monday (0) to Sunday (6).
-    const firstDayDate = new Date(currentYear, currentMonth, 1);
-    const firstDayOfWeek = firstDayDate.getDay();
-    const colStart = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Translate Sunday to index 6, others shift -1
+    // Find the Monday of the week containing the 1st of the month
+    const firstDayOfWeek = firstOfMonth.getDay(); // 0 is Sunday, 1 is Monday
+    const mondayOffset = firstDayOfWeek === 0 ? -6 : 1 - firstDayOfWeek;
+    
+    let currentMonday = new Date(currentYear, currentMonth, 1 + mondayOffset);
+    const lastOfMonth = new Date(currentYear, currentMonth + 1, 0);
 
-    // Previous month filler days
-    const prevMonthDate = new Date(currentYear, currentMonth, 0);
-    const prevMonthDaysCount = prevMonthDate.getDate();
-    const prevMonth = prevMonthDate.getMonth();
-    const prevMonthYear = prevMonthDate.getFullYear();
+    // Loop through weeks until the Monday is past the last day of the month
+    while (currentMonday <= lastOfMonth) {
+        const weekDays = [];
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(currentMonday.getFullYear(), currentMonday.getMonth(), currentMonday.getDate() + i);
+            weekDays.push(day);
+        }
+        
+        weeks.push({
+            start: weekDays[0],
+            end: weekDays[6],
+            days: weekDays
+        });
+        
+        // Advance to next Monday
+        currentMonday = new Date(currentMonday.getFullYear(), currentMonday.getMonth(), currentMonday.getDate() + 7);
+    }
+    
+    return weeks;
+}
 
-    // Next month filler days calculation
-    const totalCellsNeeded = Math.ceil((colStart + daysInMonth) / 7) * 7;
-    const nextMonthFillerCount = totalCellsNeeded - (colStart + daysInMonth);
-
-    // Today Date components to check
+// Render Weekly Tables
+function renderWeeklyTables() {
+    const container = document.getElementById('weeks-container');
+    container.innerHTML = '';
+    
+    const weeks = getWeeksOfMonth();
     const today = new Date();
     const todayStr = formatDateString(today.getFullYear(), today.getMonth(), today.getDate());
 
-    // 1. Render Previous Month Faded Days
-    for (let i = colStart - 1; i >= 0; i--) {
-        const dayNum = prevMonthDaysCount - i;
-        const dateStr = formatDateString(prevMonthYear, prevMonth, dayNum);
-        const cellData = scheduleData[dateStr] || { status: '', notes: '' };
-        
-        const cell = createDayCell(dayNum, dateStr, cellData, true, todayStr);
-        gridContainer.appendChild(cell);
-    }
+    weeks.forEach((week, weekIdx) => {
+        const weekGroup = document.createElement('div');
+        weekGroup.className = 'week-table-group';
 
-    // 2. Render Current Month Days
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = formatDateString(currentYear, currentMonth, day);
-        const cellData = scheduleData[dateStr] || { status: '', notes: '' };
-        
-        const cell = createDayCell(day, dateStr, cellData, false, todayStr);
-        gridContainer.appendChild(cell);
-    }
+        // Week Title: e.g. "TUẦN 2 (08/06 - 14/06)"
+        const weekTitle = document.createElement('div');
+        weekTitle.className = 'week-table-title';
+        const startLabel = formatDateDDMM(week.start);
+        const endLabel = formatDateDDMM(week.end);
+        weekTitle.textContent = `Tuần ${weekIdx + 1}: (${startLabel} - ${endLabel})`;
+        weekGroup.appendChild(weekTitle);
 
-    // 3. Render Next Month Faded Days
-    const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
-    const nextMonth = nextMonthDate.getMonth();
-    const nextMonthYear = nextMonthDate.getFullYear();
-    for (let day = 1; day <= nextMonthFillerCount; day++) {
-        const dateStr = formatDateString(nextMonthYear, nextMonth, day);
-        const cellData = scheduleData[dateStr] || { status: '', notes: '' };
-        
-        const cell = createDayCell(day, dateStr, cellData, true, todayStr);
-        gridContainer.appendChild(cell);
-    }
+        // Table Wrapper
+        const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'week-table-wrapper';
 
-    // Update table header text
+        // Table
+        const table = document.createElement('table');
+        table.className = 'week-table';
+
+        // Table Head
+        const thead = document.createElement('thead');
+        const trHead = document.createElement('tr');
+
+        // Headers: Tên | Buổi | Thứ 2 (DD/MM) | ...
+        const thName = document.createElement('th');
+        thName.className = 'col-th-name';
+        thName.textContent = 'Họ và Tên';
+        trHead.appendChild(thName);
+
+        const thSession = document.createElement('th');
+        thSession.className = 'col-th-session';
+        thSession.textContent = 'Buổi';
+        trHead.appendChild(thSession);
+
+        week.days.forEach(day => {
+            const thDay = document.createElement('th');
+            thDay.className = 'col-th-day';
+            const dayOfWeek = day.getDay();
+            const dayLabel = WEEKDAY_NAMES[dayOfWeek];
+            const dateLabel = formatDateDDMM(day);
+            thDay.innerHTML = `<div>${dayLabel}</div><div style="font-size: 10px; opacity: 0.7;">${dateLabel}</div>`;
+            
+            // Highlight Saturday & Sunday headers
+            if (dayOfWeek === 6) {
+                thDay.classList.add('weekend-sat-header');
+            } else if (dayOfWeek === 0) {
+                thDay.classList.add('weekend-sun-header');
+            }
+            
+            trHead.appendChild(thDay);
+        });
+        thead.appendChild(trHead);
+        table.appendChild(thead);
+
+        // Table Body
+        const tbody = document.createElement('tbody');
+
+        // Row 1: Sáng (includes merged Tên column)
+        const trSang = document.createElement('tr');
+        
+        // Merged User Name Cell
+        const tdUserName = document.createElement('td');
+        tdUserName.rowSpan = 2;
+        tdUserName.className = 'col-user-name';
+        tdUserName.textContent = userName;
+        trSang.appendChild(tdUserName);
+
+        // Session Label (Sáng)
+        const tdSessionSang = document.createElement('td');
+        tdSessionSang.className = 'col-session';
+        tdSessionSang.textContent = 'Sáng';
+        trSang.appendChild(tdSessionSang);
+
+        // Row 2: Chiều
+        const trChieu = document.createElement('tr');
+
+        // Session Label (Chiều)
+        const tdSessionChieu = document.createElement('td');
+        tdSessionChieu.className = 'col-session';
+        tdSessionChieu.textContent = 'Chiều';
+        trChieu.appendChild(tdSessionChieu);
+
+        // Populate cell nodes for Sáng & Chiều
+        week.days.forEach(day => {
+            const dateStr = formatDateString(day.getFullYear(), day.getMonth(), day.getDate());
+            const dayOfWeek = day.getDay();
+            
+            const isOtherMonth = day.getMonth() !== currentMonth;
+            const isToday = dateStr === todayStr;
+
+            // 1. Morning Cell
+            const tdDaySang = createScheduleCell(dateStr, 'sang', dayOfWeek, isOtherMonth, isToday);
+            trSang.appendChild(tdDaySang);
+
+            // 2. Afternoon Cell
+            const tdDayChieu = createScheduleCell(dateStr, 'chieu', dayOfWeek, isOtherMonth, isToday);
+            trChieu.appendChild(tdDayChieu);
+        });
+
+        tbody.appendChild(trSang);
+        tbody.appendChild(trChieu);
+        table.appendChild(tbody);
+        
+        tableWrapper.appendChild(table);
+        weekGroup.appendChild(tableWrapper);
+        container.appendChild(weekGroup);
+    });
+
+    // Update title text
     const displayMonth = String(currentMonth + 1).padStart(2, '0');
-    document.getElementById('calendar-title').textContent = `LỊCH TRÌNH ĐI TRƯỜNG - THÁNG ${displayMonth}/${currentYear}`;
+    document.getElementById('calendar-title').textContent = `BẢNG LỊCH TRÌNH CHI TIẾT - THÁNG ${displayMonth}/${currentYear}`;
 }
 
-// Create a single Day Cell Element
-function createDayCell(dayNum, dateStr, cellData, isOtherMonth, todayStr) {
-    const cell = document.createElement('div');
-    cell.className = 'day-cell';
-    
-    // Check if weekend (Saturday or Sunday)
-    const cellDate = new Date(dateStr);
-    const dayOfWeek = cellDate.getDay();
-    if (dayOfWeek === 6) {
-        cell.classList.add('sat-cell');
-    } else if (dayOfWeek === 0) {
-        cell.classList.add('sun-cell');
-    }
+// Create an individual schedule cell td element
+function createScheduleCell(dateStr, session, dayOfWeek, isOtherMonth, isToday) {
+    const td = document.createElement('td');
+    const key = `${dateStr}_${session}`;
+    const cellData = scheduleData[key] || { status: '', notes: '' };
 
-    // Check if today
-    if (dateStr === todayStr) {
-        cell.classList.add('today-cell');
-    }
+    // Set classes
+    if (dayOfWeek === 6) td.className = 'cell-sat';
+    else if (dayOfWeek === 0) td.className = 'cell-sun';
 
-    // Check if belongs to previous or next month
-    if (isOtherMonth) {
-        cell.classList.add('other-month');
-    }
+    if (isToday) td.classList.add('cell-today');
+    if (isOtherMonth) td.classList.add('cell-other-month');
 
-    // Apply status classes
+    // Status classes
     if (cellData.status) {
-        cell.classList.add(`status-${cellData.status}`);
+        td.classList.add(`cell-${cellData.status}`);
     }
 
-    // Create Day Header row (Day Number & Status Selector)
-    const headerRow = document.createElement('div');
-    headerRow.className = 'day-cell-header';
+    // Cell Content Wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'cell-content-wrapper';
 
-    const daySpan = document.createElement('span');
-    daySpan.className = 'day-number';
-    daySpan.textContent = dayNum;
-    headerRow.appendChild(daySpan);
-
-    // Only render interactive status select if it's the current month
+    // Status select (only interactive for current month days)
     if (!isOtherMonth) {
         const select = document.createElement('select');
         select.className = 'cell-status-select';
         
-        // Add options
         const options = [
             { value: '', label: 'Trống' },
-            { value: 'study', label: 'Đi trường' },
+            { value: 'study', label: 'Đi học' },
             { value: 'exam', label: 'Thi cử' },
             { value: 'holiday', label: 'Nghỉ lễ' },
             { value: 'event', label: 'Sự kiện' },
@@ -307,62 +394,59 @@ function createDayCell(dayNum, dateStr, cellData, isOtherMonth, todayStr) {
             select.appendChild(option);
         });
 
-        // Event listener for changing status
         select.addEventListener('change', (e) => {
             const newStatus = e.target.value;
             
-            // Clean previous status classes
-            cell.className = 'day-cell';
-            if (dayOfWeek === 6) cell.classList.add('sat-cell');
-            if (dayOfWeek === 0) cell.classList.add('sun-cell');
-            if (dateStr === todayStr) cell.classList.add('today-cell');
+            // Clean classes
+            td.className = '';
+            if (dayOfWeek === 6) td.className = 'cell-sat';
+            else if (dayOfWeek === 0) td.className = 'cell-sun';
+            if (isToday) td.classList.add('cell-today');
             
-            // Apply new status class
             if (newStatus) {
-                cell.classList.add(`status-${newStatus}`);
+                td.classList.add(`cell-${newStatus}`);
             }
 
-            // Update state
-            if (!scheduleData[dateStr]) {
-                scheduleData[dateStr] = { status: '', notes: '' };
+            // Save to state
+            if (!scheduleData[key]) {
+                scheduleData[key] = { status: '', notes: '' };
             }
-            scheduleData[dateStr].status = newStatus;
+            scheduleData[key].status = newStatus;
             
             saveData();
             updateStats();
         });
 
-        headerRow.appendChild(select);
+        wrapper.appendChild(select);
     } else {
-        // Read-only indicator for other month
+        // Read only label for other month
         if (cellData.status) {
             const labelSpan = document.createElement('span');
-            labelSpan.style.fontSize = '9px';
-            labelSpan.style.opacity = '0.7';
+            labelSpan.style.fontSize = '8.5px';
+            labelSpan.style.opacity = '0.6';
             labelSpan.style.fontWeight = 'bold';
+            labelSpan.style.textAlign = 'right';
             labelSpan.textContent = STATUS_LABELS[cellData.status].toUpperCase();
-            headerRow.appendChild(labelSpan);
+            wrapper.appendChild(labelSpan);
         }
     }
 
-    cell.appendChild(headerRow);
-
-    // Create Text Notes Area
+    // Textarea for schedule details
     const textarea = document.createElement('textarea');
-    textarea.className = 'day-notes-area';
+    textarea.className = 'cell-textarea';
     textarea.value = cellData.notes || '';
-    textarea.placeholder = isOtherMonth ? '' : 'Ghi chú học tập...';
+    textarea.placeholder = isOtherMonth ? '' : 'Ghi chú...';
     
     if (isOtherMonth) {
-        textarea.disabled = true; // Disable editing for other month days
+        textarea.disabled = true;
     }
 
-    // Auto-save logic on input typing (debounced)
+    // Auto save logic with debounce
     const debouncedSave = debounce((val) => {
-        if (!scheduleData[dateStr]) {
-            scheduleData[dateStr] = { status: '', notes: '' };
+        if (!scheduleData[key]) {
+            scheduleData[key] = { status: '', notes: '' };
         }
-        scheduleData[dateStr].notes = val;
+        scheduleData[key].notes = val;
         saveData();
     }, 300);
 
@@ -370,74 +454,95 @@ function createDayCell(dayNum, dateStr, cellData, isOtherMonth, todayStr) {
         debouncedSave(e.target.value);
     });
 
-    // Make sure we save on blur as well
     textarea.addEventListener('blur', (e) => {
-        if (!scheduleData[dateStr]) {
-            scheduleData[dateStr] = { status: '', notes: '' };
+        if (!scheduleData[key]) {
+            scheduleData[key] = { status: '', notes: '' };
         }
-        scheduleData[dateStr].notes = e.target.value;
+        scheduleData[key].notes = e.target.value;
         saveData();
     });
 
-    cell.appendChild(textarea);
+    wrapper.appendChild(textarea);
+    td.appendChild(wrapper);
 
-    return cell;
+    return td;
 }
 
-// Clear Month Schedule
+// Clear Current Month Schedule
 function clearCurrentMonthSchedule() {
     const displayMonth = String(currentMonth + 1).padStart(2, '0');
-    if (confirm(`Bạn có chắc chắn muốn xóa toàn bộ ghi chú và trạng thái lịch học của Tháng ${displayMonth}/${currentYear}?`)) {
+    if (confirm(`Bạn có chắc chắn muốn xóa sạch toàn bộ lịch trình Tháng ${displayMonth}/${currentYear}?`)) {
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = formatDateString(currentYear, currentMonth, day);
-            if (scheduleData[dateStr]) {
-                delete scheduleData[dateStr];
-            }
+            delete scheduleData[`${dateStr}_sang`];
+            delete scheduleData[`${dateStr}_chieu`];
         }
         
         saveData();
-        renderCalendarGrid();
+        renderWeeklyTables();
         updateStats();
     }
 }
 
+// Sync name to columns
+function handleNameSync(newName) {
+    userName = newName || "Trần Quang Nguyên";
+    saveData();
+    
+    // Quick DOM update for all user-name cells without full re-render
+    const nameCells = document.querySelectorAll('.col-user-name');
+    nameCells.forEach(cell => {
+        cell.textContent = userName;
+    });
+}
+
 // Export to CSV
 function exportToCSV() {
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const displayMonth = String(currentMonth + 1).padStart(2, '0');
+    const weeks = getWeeksOfMonth();
     
     let csvContent = "";
     
-    // Header Row 1: Title
-    csvContent += `LỊCH ĐI TRƯỜNG CÁ NHÂN - THÁNG ${displayMonth}/${currentYear}\r\n`;
+    // Header Info
+    csvContent += `LỊCH TRÌNH ĐI TRƯỜNG PHÂN THEO TUẦN - THÁNG ${displayMonth}/${currentYear}\r\n`;
+    csvContent += `Ho va Ten: ${userName}\r\n\r\n`;
     
-    // Header Row 2: Columns
-    const headers = ["Ngày", "Thứ trong tuần", "Trạng thái", "Chi tiết lịch học / Ghi chú"];
-    csvContent += headers.map(val => `"${val}"`).join(",") + "\r\n";
+    // Table Header Columns
+    const headerRow = ["Tuan", "Buoi (Ca)", "Thu 2", "Thu 3", "Thu 4", "Thu 5", "Thu 6", "Thu 7", "Chu Nhat"];
+    csvContent += headerRow.map(val => `"${val}"`).join(",") + "\r\n";
     
-    // Rows
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = formatDateString(currentYear, currentMonth, day);
-        const dayData = scheduleData[dateStr] || { status: '', notes: '' };
+    // Populate weeks
+    weeks.forEach((week, weekIdx) => {
+        const startLabel = formatDateDDMM(week.start);
+        const endLabel = formatDateDDMM(week.end);
+        const weekName = `Tuan ${weekIdx + 1} (${startLabel} - ${endLabel})`;
         
-        const date = new Date(currentYear, currentMonth, day);
-        const dayOfWeekLabel = WEEKDAY_NAMES[date.getDay()];
-        const statusLabel = STATUS_LABELS[dayData.status] || 'Chưa xếp';
-        const notesSanitized = (dayData.notes || '').replace(/"/g, '""'); // Escape double quotes for CSV
+        // Row 1: Sáng
+        let rowSang = [weekName, "Sang"];
+        week.days.forEach(day => {
+            const dateStr = formatDateString(day.getFullYear(), day.getMonth(), day.getDate());
+            const val = scheduleData[`${dateStr}_sang`] || { status: '', notes: '' };
+            const statusLabel = STATUS_LABELS[val.status] || '';
+            const cellValue = val.notes ? `${statusLabel ? `[${statusLabel}] ` : ''}${val.notes}` : statusLabel;
+            rowSang.push(cellValue.replace(/"/g, '""'));
+        });
+        csvContent += rowSang.map(val => `"${val}"`).join(",") + "\r\n";
         
-        const rowData = [
-            `${day}/${displayMonth}/${currentYear}`,
-            dayOfWeekLabel,
-            statusLabel,
-            notesSanitized
-        ];
-        
-        csvContent += rowData.map(val => `"${val}"`).join(",") + "\r\n";
-    }
+        // Row 2: Chiều
+        let rowChieu = ["", "Chieu"];
+        week.days.forEach(day => {
+            const dateStr = formatDateString(day.getFullYear(), day.getMonth(), day.getDate());
+            const val = scheduleData[`${dateStr}_chieu`] || { status: '', notes: '' };
+            const statusLabel = STATUS_LABELS[val.status] || '';
+            const cellValue = val.notes ? `${statusLabel ? `[${statusLabel}] ` : ''}${val.notes}` : statusLabel;
+            rowChieu.push(cellValue.replace(/"/g, '""'));
+        });
+        csvContent += rowChieu.map(val => `"${val}"`).join(",") + "\r\n";
+    });
     
-    // Add BOM for Excel UTF-8 support
+    // Add BOM for UTF-8 Vietnamese Excel loading
     const BOM = "\uFEFF";
     const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -445,7 +550,7 @@ function exportToCSV() {
     if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `chuanhoaAI_Lich_Di_Truong_${displayMonth}_${currentYear}.csv`);
+        link.setAttribute("download", `chuanhoaAI_Lich_Hoc_Tuan_${displayMonth}_${currentYear}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -457,24 +562,32 @@ function exportToCSV() {
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
     populateFilters();
-    renderCalendarGrid();
+    
+    // Setup Name Input
+    const nameInput = document.getElementById('user-name-input');
+    nameInput.value = userName;
+    nameInput.addEventListener('input', (e) => {
+        handleNameSync(e.target.value.trim());
+    });
+
+    renderWeeklyTables();
     updateStats();
 
-    // Event listeners for filters
+    // Event listeners for month/year selectors
     const monthSelect = document.getElementById('month-select');
     const yearSelect = document.getElementById('year-select');
     
     monthSelect.addEventListener('change', (e) => {
         currentMonth = parseInt(e.target.value);
         saveData();
-        renderCalendarGrid();
+        renderWeeklyTables();
         updateStats();
     });
     
     yearSelect.addEventListener('change', (e) => {
         currentYear = parseInt(e.target.value);
         saveData();
-        renderCalendarGrid();
+        renderWeeklyTables();
         updateStats();
     });
 
