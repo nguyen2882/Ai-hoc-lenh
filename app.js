@@ -498,51 +498,57 @@ function handleNameSync(newName) {
     });
 }
 
-// Export to CSV
+// Export to CSV matching the Excel screenshot layout exactly
 function exportToCSV() {
     const displayMonth = String(currentMonth + 1).padStart(2, '0');
     const weeks = getWeeksOfMonth();
     
     let csvContent = "";
     
-    // Header Info
-    csvContent += `LỊCH TRÌNH ĐI TRƯỜNG PHÂN THEO TUẦN - THÁNG ${displayMonth}/${currentYear}\r\n`;
-    csvContent += `Ho va Ten: ${userName}\r\n\r\n`;
-    
-    // Table Header Columns
-    const headerRow = ["Tuan", "Buoi (Ca)", "Thu 2", "Thu 3", "Thu 4", "Thu 5", "Thu 6", "Thu 7", "Chu Nhat"];
-    csvContent += headerRow.map(val => `"${val}"`).join(",") + "\r\n";
-    
-    // Populate weeks
+    // Loop week by week to generate layout identical to screenshot
     weeks.forEach((week, weekIdx) => {
-        const startLabel = formatDateDDMM(week.start);
-        const endLabel = formatDateDDMM(week.end);
-        const weekName = `Tuan ${weekIdx + 1} (${startLabel} - ${endLabel})`;
+        // Week Title Row (e.g. "tuần 1:")
+        const weekLabelRow = [`tuần ${weekIdx + 1}:`, "", "", "", "", "", "", "", ""];
+        csvContent += weekLabelRow.map(val => `"${val}"`).join(",") + "\r\n";
         
-        // Row 1: Sáng
-        let rowSang = [weekName, "Sang"];
+        // Header Row: Blank, Tên, Thứ 2 (date), Thứ 3 (date)...
+        const headerRow = ["", "Tên"];
+        week.days.forEach(day => {
+            const dayOfWeek = day.getDay();
+            const dayLabel = WEEKDAY_NAMES[dayOfWeek];
+            const dateLabel = formatDateDDMM(day);
+            headerRow.push(`${dayLabel} (${dateLabel})`);
+        });
+        csvContent += headerRow.map(val => `"${val}"`).join(",") + "\r\n";
+        
+        // Morning Row (Sáng)
+        const rowSang = ["", userName];
         week.days.forEach(day => {
             const dateStr = formatDateString(day.getFullYear(), day.getMonth(), day.getDate());
             const val = scheduleData[`${dateStr}_sang`] || { status: '', notes: '' };
             const statusLabel = STATUS_LABELS[val.status] || '';
-            const cellValue = val.notes ? `${statusLabel ? `[${statusLabel}] ` : ''}${val.notes}` : statusLabel;
-            rowSang.push(cellValue.replace(/"/g, '""'));
+            const cellValue = val.notes ? `${statusLabel ? `${statusLabel}: ` : ''}${val.notes}` : statusLabel;
+            rowSang.push(cellValue.replace(/\n/g, ' ').replace(/"/g, '""'));
         });
         csvContent += rowSang.map(val => `"${val}"`).join(",") + "\r\n";
         
-        // Row 2: Chiều
-        let rowChieu = ["", "Chieu"];
+        // Afternoon Row (Chiều)
+        // Column B (Tên) is left blank to represent the merged cell (B18-B19 merged)
+        const rowChieu = ["", ""];
         week.days.forEach(day => {
             const dateStr = formatDateString(day.getFullYear(), day.getMonth(), day.getDate());
             const val = scheduleData[`${dateStr}_chieu`] || { status: '', notes: '' };
             const statusLabel = STATUS_LABELS[val.status] || '';
-            const cellValue = val.notes ? `${statusLabel ? `[${statusLabel}] ` : ''}${val.notes}` : statusLabel;
-            rowChieu.push(cellValue.replace(/"/g, '""'));
+            const cellValue = val.notes ? `${statusLabel ? `${statusLabel}: ` : ''}${val.notes}` : statusLabel;
+            rowChieu.push(cellValue.replace(/\n/g, ' ').replace(/"/g, '""'));
         });
         csvContent += rowChieu.map(val => `"${val}"`).join(",") + "\r\n";
+        
+        // Separating blank row
+        csvContent += `"", "", "", "", "", "", "", "", ""\r\n`;
     });
     
-    // Add BOM for UTF-8 Vietnamese Excel loading
+    // Add BOM for UTF-8 Vietnamese loading in Excel
     const BOM = "\uFEFF";
     const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
